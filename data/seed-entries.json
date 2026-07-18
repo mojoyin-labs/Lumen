@@ -1,0 +1,72 @@
+{
+  "schema_version": "0.1.0",
+  "note": "Synthetic seed entries for demonstration. No real participant data. Illustrates the format and a recurring pattern across a cycle.",
+  "entries": [
+    {
+      "entry_id": "a1",
+      "participant_id": "p_demo_01",
+      "schema_version": "0.1.0",
+      "logged_at": "2026-05-02T08:10:00Z",
+      "cycle_day": 24,
+      "life_stage": "premenopausal",
+      "sleep_hours": 5.0,
+      "stress_level": 2,
+      "symptoms": [
+        { "code": "sleep_disturbance", "severity": 2, "note": "kept waking" },
+        { "code": "brain_fog", "severity": 2, "note": null },
+        { "code": "mood_irritable", "severity": 2, "note": null }
+      ],
+      "source_modality": "text",
+      "consented_for_research": true
+    },
+    {
+      "entry_id": "a2",
+      "participant_id": "p_demo_01",
+      "schema_version": "0.1.0",
+      "logged_at": "2026-05-03T07:55:00Z",
+      "cycle_day": 25,
+      "life_stage": "premenopausal",
+      "sleep_hours": 6.0,
+      "stress_level": 2,
+      "symptoms": [
+        { "code": "bloating", "severity": 2, "note": null },
+        { "code": "breast_tenderness", "severity": 1, "note": null },
+        { "code": "fatigue", "severity": 2, "note": null }
+      ],
+      "source_modality": "text",
+      "consented_for_research": true
+    },
+    {
+      "entry_id": "a3",
+      "participant_id": "p_demo_01",
+      "schema_version": "0.1.0",
+      "logged_at": "2026-05-06T09:20:00Z",
+      "cycle_day": 28,
+      "life_stage": "premenopausal",
+      "sleep_hours": 4.5,
+      "stress_level": 3,
+      "symptoms": [
+        { "code": "migraine", "severity": 3, "note": "with aura" },
+        { "code": "mood_low", "severity": 2, "note": null },
+        { "code": "cramps", "severity": 2, "note": null }
+      ],
+      "source_modality": "voice",
+      "consented_for_research": true
+    },
+    {
+      "entry_id": "a4",
+      "participant_id": "p_demo_01",
+      "schema_version": "0.1.0",
+      "logged_at": "2026-05-12T08:00:00Z",
+      "cycle_day": 6,
+      "life_stage": "premenopausal",
+      "sleep_hours": 7.5,
+      "stress_level": 1,
+      "symptoms": [
+        { "code": "fatigue", "severity": 1, "note": "much better" }
+      ],
+      "source_modality": "text",
+      "consented_for_research": true
+    }
+  ]
+}

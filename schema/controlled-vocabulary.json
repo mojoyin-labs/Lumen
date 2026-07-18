@@ -1,0 +1,37 @@
+{
+  "version": "0.1.0",
+  "description": "Controlled vocabulary for the Hormonal Symptom Log Schema. Each code has a canonical label and common synonyms that a free-text-to-schema mapper should recognize. Extend by adding codes, never by silently renaming existing ones.",
+  "severity_scale": {
+    "0": "none",
+    "1": "mild",
+    "2": "moderate",
+    "3": "severe"
+  },
+  "symptoms": [
+    { "code": "fatigue", "label": "Fatigue", "synonyms": ["tired", "exhausted", "no energy", "worn out", "drained"] },
+    { "code": "brain_fog", "label": "Brain fog", "synonyms": ["foggy", "can't focus", "cloudy head", "unfocused", "forgetful"] },
+    { "code": "migraine", "label": "Migraine", "synonyms": ["migraine", "aura headache"] },
+    { "code": "headache", "label": "Headache", "synonyms": ["headache", "head hurts", "head pain"] },
+    { "code": "mood_low", "label": "Low mood", "synonyms": ["sad", "down", "depressed", "low", "tearful"] },
+    { "code": "mood_irritable", "label": "Irritability", "synonyms": ["irritable", "snappy", "short tempered", "on edge", "angry"] },
+    { "code": "anxiety", "label": "Anxiety", "synonyms": ["anxious", "worried", "panicky", "on edge", "racing thoughts"] },
+    { "code": "hot_flash", "label": "Hot flash", "synonyms": ["hot flash", "hot flush", "overheating", "sudden heat"] },
+    { "code": "night_sweats", "label": "Night sweats", "synonyms": ["night sweats", "sweating at night", "woke up soaked"] },
+    { "code": "bloating", "label": "Bloating", "synonyms": ["bloated", "puffy", "swollen belly"] },
+    { "code": "cramps", "label": "Cramps", "synonyms": ["cramps", "period pain", "menstrual pain"] },
+    { "code": "breast_tenderness", "label": "Breast tenderness", "synonyms": ["sore breasts", "tender chest", "breast pain"] },
+    { "code": "acne", "label": "Acne / skin changes", "synonyms": ["breakouts", "pimples", "acne", "spots"] },
+    { "code": "hair_change", "label": "Hair changes", "synonyms": ["hair loss", "thinning hair", "extra hair", "shedding"] },
+    { "code": "weight_change", "label": "Weight change", "synonyms": ["gained weight", "lost weight", "weight gain"] },
+    { "code": "libido_change", "label": "Libido change", "synonyms": ["low sex drive", "no libido", "libido"] },
+    { "code": "sleep_disturbance", "label": "Sleep disturbance", "synonyms": ["couldn't sleep", "insomnia", "kept waking", "poor sleep", "slept badly"] },
+    { "code": "nausea", "label": "Nausea", "synonyms": ["nauseous", "queasy", "sick to stomach"] },
+    { "code": "dizziness", "label": "Dizziness", "synonyms": ["dizzy", "lightheaded", "vertigo"] },
+    { "code": "palpitations", "label": "Palpitations", "synonyms": ["racing heart", "heart pounding", "fluttering heart"] },
+    { "code": "joint_pain", "label": "Joint pain", "synonyms": ["achy joints", "joint pain", "stiff joints"] },
+    { "code": "digestive_change", "label": "Digestive change", "synonyms": ["constipated", "diarrhea", "stomach upset", "gut issues"] },
+    { "code": "cycle_irregular", "label": "Irregular cycle", "synonyms": ["late period", "irregular", "missed period", "early period"] },
+    { "code": "spotting", "label": "Spotting", "synonyms": ["spotting", "light bleeding between periods"] },
+    { "code": "other", "label": "Other", "synonyms": [] }
+  ]
+}

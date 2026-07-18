@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/YOURNAME/herlog/schema/hormonal-symptom-log.schema.json",
+  "title": "Hormonal Symptom Log Schema",
+  "description": "Open, versioned schema for standardized self-reported hormonal-health symptom logging. Designed so free-text entries can be mapped to a controlled vocabulary and aggregated into research-ready datasets. NOT a diagnostic instrument.",
+  "version": "0.1.0",
+  "license": "CC-BY-4.0",
+  "type": "object",
+  "required": ["entry_id", "logged_at", "schema_version", "symptoms"],
+  "properties": {
+    "entry_id": {
+      "type": "string",
+      "description": "UUID for the entry. Contains no personal information."
+    },
+    "participant_id": {
+      "type": "string",
+      "description": "Opaque pseudonymous ID. Generated locally; never derived from name, email, or device identifiers."
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "0.1.0"
+    },
+    "logged_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when the entry was logged."
+    },
+    "cycle_day": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "maximum": 60,
+      "description": "Day of menstrual cycle if known. Null if unknown or not applicable."
+    },
+    "life_stage": {
+      "type": ["string", "null"],
+      "enum": ["premenopausal", "perimenopausal", "postmenopausal", "pregnant", "postpartum", "unknown", null],
+      "description": "Self-reported life stage. Optional."
+    },
+    "sleep_hours": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 24
+    },
+    "stress_level": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "maximum": 3,
+      "description": "0 none, 1 mild, 2 moderate, 3 severe."
+    },
+    "symptoms": {
+      "type": "array",
+      "description": "List of symptoms extracted from the entry, each mapped to the controlled vocabulary.",
+      "items": {
+        "type": "object",
+        "required": ["code", "severity"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Controlled-vocabulary symptom code. See controlled-vocabulary.json.",
+            "enum": [
+              "fatigue",
+              "brain_fog",
+              "migraine",
+              "headache",
+              "mood_low",
+              "mood_irritable",
+              "anxiety",
+              "hot_flash",
+              "night_sweats",
+              "bloating",
+              "cramps",
+              "breast_tenderness",
+              "acne",
+              "hair_change",
+              "weight_change",
+              "libido_change",
+              "sleep_disturbance",
+              "nausea",
+              "dizziness",
+              "palpitations",
+              "joint_pain",
+              "digestive_change",
+              "cycle_irregular",
+              "spotting",
+              "other"
+            ]
+          },
+          "severity": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3,
+            "description": "0 none, 1 mild, 2 moderate, 3 severe."
+          },
+          "note": {
+            "type": ["string", "null"],
+            "description": "Optional short free-text detail. Must be scrubbed of names, places, and identifiers before export."
+          }
+        }
+      }
+    },
+    "source_modality": {
+      "type": "string",
+      "enum": ["text", "voice", "image_lab_result"],
+      "default": "text",
+      "description": "How the entry was captured."
+    },
+    "consented_for_research": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the participant has explicitly consented to include this de-identified entry in the open research dataset."
+    }
+  },
+  "additionalProperties": false
+}

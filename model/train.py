@@ -26,7 +26,7 @@ from sklearn.metrics import (accuracy_score, precision_score, recall_score,
 RANDOM_STATE = 42
 
 # ---------- Load & clean ----------
-df = pd.read_excel('PCOS_raw.xlsx', sheet_name='Full_new')
+df = pd.read_excel('PCOS_Raw.xlsx', sheet_name='Full_new')
 df.columns = [c.strip() for c in df.columns]  # trim whitespace in headers
 df = df.drop(columns=[c for c in df.columns if c.startswith('Unnamed')], errors='ignore')
 df = df.drop(columns=['Sl. No', 'Patient File No.'], errors='ignore')

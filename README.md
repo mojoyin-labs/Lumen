@@ -1,42 +1,87 @@
-# HerLog
+# Lumen
 
-**An open standard for hormonal-health symptom logging — and a reference app that produces it.**
+**Screen your PCOS risk from what you already know — and build the symptom history that gets you taken seriously.**
 
-Hack-Nation 6th Global AI Hackathon · Challenge 05: Foundation Models for Women's Hormonal Health · Application layer.
+Lumen helps women notice patterns associated with PCOS (polycystic ovary syndrome) and prepare a clear summary to discuss with a doctor. It is a screening and self-advocacy tool — **not a diagnostic device.**
+
+🔗 **Live app:** https://lumen-blond-alpha.vercel.app/
+🏆 Built for the Hack-Nation 6th Global AI Hackathon · Challenge 05: Foundation Models for Women's Hormonal Health · **Application layer** (with a Model-layer contribution).
+
+---
 
 ## The problem
 
-Hormones shift continuously, but a doctor's appointment captures a single snapshot. Patterns get lost between visits. And across users, symptom data is recorded in a thousand incompatible ways, so none of it compounds into research.
+PCOS affects roughly 1 in 10 women, yet up to 70% of cases go undiagnosed and diagnosis often takes years. The signal shows up as a *pattern* — irregular cycles, skin and hair changes, weight — spread across months, but each doctor's visit only captures a snapshot. So women get dismissed, repeatedly. The information exists; it's just never assembled in one place.
 
-## What HerLog contributes
+## What Lumen does
 
-The deliverable is **not the app**. It is an open, reusable building block:
+- **Risk screening from self-report alone.** A woman answers questions about things she already knows — cycle regularity, weight, skin, hair, lifestyle — and a trained model returns a screening signal with an **explainable breakdown** of which factors raised or lowered it.
+- **Symptom logging (text + voice).** Entries are structured into an open schema and shown on a timeline, turning scattered days into a visible pattern.
+- **Doctor summary (PDF).** A one-page summary of reported symptoms, cycle pattern, and screening signal to bring to an appointment.
+- **Consent-gated open export.** With explicit opt-in, a de-identified copy is exported in an open schema format for research.
 
-- **A versioned schema** (`schema/hormonal-symptom-log.schema.json`) for a symptom-log entry.
-- **A controlled vocabulary** (`schema/controlled-vocabulary.json`) so free-text reports become comparable.
-- **A dataset card** (`schema/DATASET_CARD.md`) with consent, de-identification, and split guidance.
+Every result is framed as a screening signal, never a diagnosis. PCOS names the *purpose* of the tool; it is never attached to a user's result.
 
-The app is the **instrument** that generates schema-conformant data. An LLM maps a person's own words onto the controlled vocabulary; the schema is the contract that makes the output comparable across everyone who uses it. That mapping is the reusable infrastructure — a direct answer to the brief's "no shared benchmark / fragmented infrastructure" gap.
+## What makes it different
 
-## What the app does
+Most PCOS models rely on hormone panels and ultrasound — features a woman can't self-report, so they only work *after* she's already in the clinical system. Lumen's model uses **only self-reportable inputs** and still reaches **~87% accuracy** — a meaningful signal *before a single test*. It's also **explainable**, and it leaves behind reusable open infrastructure rather than being an isolated app.
 
-1. Log how you feel, in your own words (text now; voice and lab-photo on the roadmap).
-2. The entry is structured to the open schema and added to a timeline.
-3. Generate a plain-language summary of your patterns to bring to a clinician.
-4. Optionally consent to export a de-identified copy into the open dataset format.
+---
 
-## What it is not
+## The model
 
-Not a diagnostic tool. It makes no medical claims. It helps you track and prepare to talk to a clinician.
+Trained on the open **Kottarathil PCOS dataset** (Kaggle): 541 women across 10 hospitals in Kerala, India — a dataset used in peer-reviewed work (Nature *Scientific Reports*, 2025).
 
-## Stack
+Two models were trained:
 
-- Frontend: React (single page).
-- Model calls: OpenAI API via a serverless function (key held server-side).
-  - `prompts/structure-entry.md` — free text → schema JSON.
-  - `prompts/doctor-summary.md` — structured history → clinician-ready summary.
-- Multimodal roadmap: Whisper for voice, gpt-image-2 for lab-result photos.
+| Model | Features | Accuracy | Precision | Recall | AUC |
+|---|---|---|---|---|---|
+| Benchmark (all clinical features) | 41 | 0.917 | 0.966 | 0.778 | 0.955 |
+| **Self-report (app)** | 13 | **0.872** | 0.844 | 0.750 | 0.886 |
+
+The benchmark aligns with published results (~89–93%), confirming the pipeline is sound. The **self-report model** is what the app uses: logistic regression, chosen because it is explainable (per-feature contributions) and deploys as pure JavaScript with no ML runtime. See [`model/MODEL_CARD.md`](model/MODEL_CARD.md) for full metrics, intended use, and limitations.
+
+**Honest limitation:** self-report recall is 0.75 — the screen misses about 1 in 4 true cases, so a lower-risk result never means "you're fine." The threshold is tuned to flag rather than miss, and every result defers to a clinician.
+
+---
+
+## Reusable, open-licensed assets
+
+This is more than an app. The following are published for others to build on:
+
+- **Symptom-log schema + controlled vocabulary** — [`schema/`](schema/) — a standard for making self-reported hormonal symptoms comparable across users.
+- **Trained model + model card** — [`model/`](model/) — reproducible with a fixed seed.
+- **Training pipeline** — [`model/train.py`](model/train.py) — run it to regenerate the metrics.
+- **Dataset card** — [`schema/DATASET_CARD.md`](schema/DATASET_CARD.md) — consent, de-identification, and split guidance.
+
+## Tech stack
+
+React (Vite) · JavaScript · Python (scikit-learn) · OpenAI API + Whisper · Vercel. The risk math runs client-side in pure JS; OpenAI calls run through serverless functions with the key held server-side. Data persists locally in the browser — no account, no server-side personal data (privacy by minimization).
+
+## Run locally
+
+```bash
+npm install
+npm run dev          # risk screener works with no key
+# for voice + structuring features:
+vercel dev           # requires OPENAI_API_KEY in .env.local
+```
+
+Retrain the model:
+```bash
+cd model
+pip install pandas scikit-learn openpyxl
+python train.py
+```
+
+## Safety & scope
+
+Lumen does not diagnose. PCOS diagnosis requires clinical evaluation (the Rotterdam criteria: bloodwork, ultrasound, clinical signs). Lumen produces a statistical screening signal from self-reported data to help a woman decide whether to seek assessment and to prepare for that conversation. Always discuss results with a qualified clinician.
+
+## Data & citation
+
+Dataset: Kottarathil, P. *Polycystic Ovary Syndrome (PCOS)*, Kaggle. Model and schema released under CC-BY-4.0; code under MIT.
 
 ## License
 
-Schema and dataset: CC-BY-4.0. Code: MIT. Built to be extended after the hackathon.
+Code: MIT · Schema, model card, and derived metrics: CC-BY-4.0.

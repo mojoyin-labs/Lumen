@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { 
   Activity, 
   Scale,  
@@ -27,6 +27,9 @@ import {
   MicOff,
   Download,
   X,
+  Database,
+  FileText
+
 } from "lucide-react";
 import { scoreRisk } from "./model/riskModel";
 
@@ -45,6 +48,38 @@ const SYMPTOM_LABELS = {
 
 const SEVERITY_LABELS = ["none", "mild", "moderate", "severe"];
 const SEVERITY_CLASSES = ["sev-0", "sev-1", "sev-2", "sev-3"];
+
+// Smooth number interpolation hook for deliberate, animated percentage transitions
+function useAnimatedNumber(targetValue, duration = 400) {
+  const [displayValue, setDisplayValue] = useState(targetValue);
+  const startValueRef = useRef(targetValue);
+  const startTimeRef = useRef(null);
+  const animationFrameRef = useRef(null);
+
+  useEffect(() => {
+    startValueRef.current = displayValue;
+    startTimeRef.current = performance.now();
+
+    const animate = (now) => {
+      const elapsed = now - startTimeRef.current;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(startValueRef.current + (targetValue - startValueRef.current) * easeProgress);
+      setDisplayValue(current);
+
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    };
+  }, [targetValue, duration]);
+
+  return displayValue;
+}
 
 // Relative time formatter
 function timeAgo(isoString) {
@@ -104,6 +139,11 @@ export default function App() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [researchConsent, setResearchConsent] = useState(false);
 
+  // Slide-over drawer state
+  const [activeDrawer, setActiveDrawer] = useState(null); // 'model' | 'schema' | 'settings' | 'help' | null
+  const symptomLogRef = useRef(null);
+  const mainWorkspaceRef = useRef(null);
+
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -152,6 +192,23 @@ export default function App() {
     return scoreRisk(modelInputs);
   }, [modelInputs]);
 
+  // Smooth animated percentage counter
+  const targetPercentage = Math.round(riskResult.risk * 100);
+  const animatedPercentage = useAnimatedNumber(targetPercentage, 450);
+
+  // Transient flash state when score changes
+  const [isUpdatingSignal, setIsUpdatingSignal] = useState(false);
+  const prevPercentageRef = useRef(targetPercentage);
+
+  useEffect(() => {
+    if (prevPercentageRef.current !== targetPercentage) {
+      prevPercentageRef.current = targetPercentage;
+      setIsUpdatingSignal(true);
+      const timer = setTimeout(() => setIsUpdatingSignal(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [targetPercentage]);
+
   // Copy-paste synthesis block
   const doctorSummaryText = useMemo(() => {
     const riskPercentage = Math.round(riskResult.risk * 100);
@@ -193,6 +250,109 @@ This is a mathematical screening signal based on statistical correlations from s
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // Generate clean PDF summary for doctor visit via browser print dialog
+  const downloadPDF = useCallback(() => {
+    const dateStr = new Date().toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Lumen Doctor Summary - ${dateStr}</title>
+          <style>
+            @media print {
+              body { padding: 0; }
+            }
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 40px; color: #1e293b; max-width: 800px; margin: 0 auto; line-height: 1.6; }
+            .header { border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 24px; }
+            h1 { color: #4f46e5; margin: 0 0 6px 0; font-size: 24px; font-weight: 700; }
+            .meta { color: #64748b; font-size: 14px; }
+            .badge { display: inline-block; padding: 6px 14px; background: #fee2e2; color: #991b1b; font-weight: 600; border-radius: 9999px; font-size: 13px; margin: 16px 0 24px 0; }
+            .section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+            .section-title { font-weight: 700; color: #0f172a; margin-bottom: 12px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; }
+            ul { margin: 0; padding-left: 20px; }
+            li { margin-bottom: 8px; }
+            .disclaimer { font-size: 12px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 16px; margin-top: 32px; background: #fff8f6; border: 1px solid #fecdd3; border-radius: 6px; padding: 12px 16px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Lumen PCOS Risk-Screening Discussion Guide</h1>
+            <div class="meta">Generated on ${dateStr} for Clinical Discussion</div>
+          </div>
+
+          <div class="badge">${riskResult.band.toUpperCase()} RISK PATTERN (${Math.round(riskResult.risk * 100)}%)</div>
+
+          <div class="section">
+            <div class="section-title">Self-Reported Metrics</div>
+            <ul>
+              <li><strong>Age:</strong> ${formData.age} yrs</li>
+              <li><strong>Weight &amp; Height:</strong> ${formData.weight} kg | ${formData.height} cm (BMI: ${calculatedBMI} — ${bmiCategory.label})</li>
+              <li><strong>Menstrual Cycle:</strong> ${formData.cycleRegularity === 2 ? "Regular" : "Irregular"} (${formData.periodLength} days bleeding)</li>
+              <li><strong>Recent Weight Gain:</strong> ${formData.weightGain === 1 ? "Yes" : "No"}</li>
+              <li><strong>Excess Hair Growth:</strong> ${formData.hairGrowth === 1 ? "Yes" : "No"}</li>
+              <li><strong>Skin Darkening:</strong> ${formData.skinDarkening === 1 ? "Yes" : "No"}</li>
+              <li><strong>Hair Loss / Thinning:</strong> ${formData.hairLoss === 1 ? "Yes" : "No"}</li>
+              <li><strong>Acne / Pimples:</strong> ${formData.pimples === 1 ? "Yes" : "No"}</li>
+              <li><strong>Frequent Fast Food:</strong> ${formData.fastFood === 1 ? "Yes" : "No"}</li>
+              <li><strong>Regular Exercise:</strong> ${formData.exercise === 1 ? "Yes" : "No"}</li>
+            </ul>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Key Screening Signal Factors</div>
+            <ul>
+              ${riskResult.drivers.slice(0, 5).map(d => {
+                const cleanName = FEATURE_LABELS[d.feature]?.label || d.feature;
+                return `<li><strong>${cleanName}:</strong> ${d.direction === "raises" ? "Raises screening signal" : "Lowers screening signal"}</li>`;
+              }).join('')}
+            </ul>
+          </div>
+
+          <div class="disclaimer">
+            <strong>Medical Disclaimer:</strong> This document is a mathematical screening signal based on statistical correlations from self-reported data. It is NOT a medical diagnosis, clinical assessment, or treatment recommendation. Always consult a qualified physician for official medical evaluation.
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  }, [formData, calculatedBMI, bmiCategory, riskResult]);
+
+  // Sidebar navigation handler
+  const handleNavClick = useCallback((target) => {
+    if (target === 'screening') {
+      setActiveDrawer(null);
+      if (mainWorkspaceRef.current) {
+        mainWorkspaceRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } else if (target === 'symptom_log') {
+      setActiveDrawer(null);
+      if (symptomLogRef.current) {
+        symptomLogRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const textarea = symptomLogRef.current.querySelector('textarea');
+        if (textarea) textarea.focus();
+      }
+    } else {
+      setActiveDrawer(prev => prev === target ? null : target);
+    }
+  }, []);
 
   // --- Export / Download Logic ---
 
@@ -444,38 +604,56 @@ This is a mathematical screening signal based on statistical correlations from s
         </div>
         
         <nav className="nav-menu">
-          <div className="nav-item active">
+          <button 
+            className={`nav-item ${!activeDrawer ? "active" : ""}`}
+            onClick={() => handleNavClick('screening')}
+          >
             <HeartPulse className="nav-item-icon" />
             <span className="tooltip-box">Risk Screening</span>
-          </div>
-          <div className="nav-item">
+          </button>
+          <button 
+            className="nav-item"
+            onClick={() => handleNavClick('symptom_log')}
+          >
             <ClipboardList className="nav-item-icon" />
             <span className="tooltip-box">Symptom Log</span>
-          </div>
-          <a href="file:///e:/Dev/Lumen/model/MODEL_CARD.md" className="nav-item">
+          </button>
+          <button 
+            className={`nav-item ${activeDrawer === 'model' ? "active" : ""}`}
+            onClick={() => handleNavClick('model')}
+          >
             <Sparkles className="nav-item-icon" />
             <span className="tooltip-box">Model Details</span>
-          </a>
-          <a href="file:///e:/Dev/Lumen/schema/DATASET_CARD.md" className="nav-item">
+          </button>
+          <button 
+            className={`nav-item ${activeDrawer === 'schema' ? "active" : ""}`}
+            onClick={() => handleNavClick('schema')}
+          >
             <Info className="nav-item-icon" />
             <span className="tooltip-box">Schema Guide</span>
-          </a>
+          </button>
         </nav>
 
         <div className="sidebar-bottom">
-          <div className="nav-item">
+          <button 
+            className={`nav-item ${activeDrawer === 'settings' ? "active" : ""}`}
+            onClick={() => handleNavClick('settings')}
+          >
             <Settings className="nav-item-icon" />
             <span className="tooltip-box">Settings</span>
-          </div>
-          <div className="nav-item">
+          </button>
+          <button 
+            className={`nav-item ${activeDrawer === 'help' ? "active" : ""}`}
+            onClick={() => handleNavClick('help')}
+          >
             <HelpCircle className="nav-item-icon" />
             <span className="tooltip-box">Help Support</span>
-          </div>
+          </button>
         </div>
       </aside>
 
       {/* 2. Central Workspace Area */}
-      <main className="main-content-panel">
+      <main className="main-content-panel" ref={mainWorkspaceRef}>
         
         {/* Top Header */}
         <header className="content-header">
@@ -503,12 +681,18 @@ This is a mathematical screening signal based on statistical correlations from s
         <div className="welcome-banner">
           <div className="welcome-text">
             <h2>Hello, Guest</h2>
-            <p>Lumen helps you screen self-reported health markers against statistical patterns worth discussing with a doctor.</p>
+            <p>Lumen helps you notice patterns associated with PCOS (polycystic ovary syndrome) and prepare a summary to discuss with a doctor. It doesn't diagnose.</p>
           </div>
-          <button className="welcome-badge-btn" onClick={() => setShowExportModal(true)}>
-            <Download style={{ width: 16, height: 16 }} />
-            <span>Export Report</span>
-          </button>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button className="welcome-badge-btn" onClick={downloadPDF} style={{ backgroundColor: 'var(--violet-primary)', color: '#ffffff' }}>
+              <FileText style={{ width: 16, height: 16 }} />
+              <span>Get Doctor Summary (PDF)</span>
+            </button>
+            <button className="welcome-badge-btn" onClick={() => setShowExportModal(true)}>
+              <Download style={{ width: 16, height: 16 }} />
+              <span>Export JSON</span>
+            </button>
+          </div>
         </div>
 
         {/* Top Overview Cards row */}
@@ -563,7 +747,7 @@ This is a mathematical screening signal based on statistical correlations from s
           </div>
 
           {/* Card 4: Model Risk Result */}
-          <div className={`metric-card ${riskResult.band}`}>
+          <div className={`metric-card ${riskResult.band} ${isUpdatingSignal ? "signal-pulse" : ""}`}>
             <div className="metric-header">
               <span className="metric-title">Screening Signal</span>
               <div className="metric-icon-box" style={{ 
@@ -579,7 +763,9 @@ This is a mathematical screening signal based on statistical correlations from s
               </div>
             </div>
             <div className="metric-value-box">
-              <span className="metric-value">{Math.round(riskResult.risk * 100)}%</span>
+              <span className={`metric-value ${isUpdatingSignal ? "signal-text-updating" : ""}`}>
+                {animatedPercentage}%
+              </span>
             </div>
             <span className="metric-sub" style={{ 
               color: riskResult.band === "lower" ? "var(--emerald-text)" : 
@@ -589,6 +775,25 @@ This is a mathematical screening signal based on statistical correlations from s
             </span>
           </div>
         </section>
+
+        {/* Calm supportive banner for higher-risk screening signal */}
+        {riskResult.band === "higher" && (
+          <div className="higher-risk-support-card">
+            <div className="support-card-left">
+              <HeartPulse className="support-card-icon" />
+              <div className="support-card-text">
+                <strong className="support-card-title">A gentle note on your screening signal</strong>
+                <p className="support-card-desc">
+                  A higher-risk pattern is <strong>not a diagnosis</strong> — it simply means your self-reported markers show a pattern worth discussing with a qualified doctor. You can download your 1-page summary to bring directly to that visit.
+                </p>
+              </div>
+            </div>
+            <button className="pdf-download-btn support-card-pdf-btn" onClick={downloadPDF}>
+              <FileText style={{ width: 15, height: 15 }} />
+              <span>Get Doctor Summary (PDF)</span>
+            </button>
+          </div>
+        )}
 
         {/* Central Workspace — full-width panel */}
         <section>
@@ -861,7 +1066,7 @@ This is a mathematical screening signal based on statistical correlations from s
         </div>
 
         {/* Symptom Log Input */}
-        <div className="sidebar-section">
+        <div className="sidebar-section" ref={symptomLogRef}>
           <span className="sidebar-section-title">Log How You Feel</span>
           
           <div className="symptom-input-wrapper">
@@ -923,9 +1128,12 @@ This is a mathematical screening signal based on statistical correlations from s
           <span className="sidebar-section-title">Symptom Timeline</span>
           <div className="timeline-list">
             {logEntries.length === 0 && (
-              <div className="timeline-empty">
-                <Clock style={{ width: 20, height: 20, color: "var(--text-muted)" }} />
-                <span>Your logged entries will appear here</span>
+              <div className="timeline-empty warm-first-run">
+                <Sparkles style={{ width: 22, height: 22, color: "var(--rose-text)" }} />
+                <strong className="first-run-title">Welcome to your symptom journal</strong>
+                <p className="first-run-desc">
+                  Lumen is a gentle, private space to track how you feel each day and prepare a clear summary to share with your doctor.
+                </p>
               </div>
             )}
             {logEntries.map((entry) => {
@@ -1008,13 +1216,23 @@ This is a mathematical screening signal based on statistical correlations from s
                 <span>Discussion Report</span>
               </span>
               
-              <button 
-                onClick={copyToClipboard} 
-                className={`export-btn ${copied ? "success" : ""}`}
-              >
-                {copied ? <Check style={{ width: 12, height: 12 }} /> : <Copy style={{ width: 12, height: 12 }} />}
-                <span>{copied ? "Copied" : "Copy"}</span>
-              </button>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button 
+                  onClick={downloadPDF} 
+                  className="export-btn"
+                  title="Download Doctor Summary as PDF"
+                >
+                  <FileText style={{ width: 13, height: 13 }} />
+                  <span>PDF</span>
+                </button>
+                <button 
+                  onClick={copyToClipboard} 
+                  className={`export-btn ${copied ? "success" : ""}`}
+                >
+                  {copied ? <Check style={{ width: 12, height: 12 }} /> : <Copy style={{ width: 12, height: 12 }} />}
+                  <span>{copied ? "Copied" : "Copy"}</span>
+                </button>
+              </div>
             </div>
             
             <pre className="export-guide-preview">
@@ -1081,12 +1299,20 @@ This is a mathematical screening signal based on statistical correlations from s
               </div>
             </div>
 
-            <div className="export-modal-actions">
+            <div className="export-modal-actions" style={{ flexWrap: 'wrap', gap: 8 }}>
               <button
                 className="export-modal-cancel"
                 onClick={() => { setShowExportModal(false); setResearchConsent(false); }}
               >
                 Cancel
+              </button>
+              <button
+                className="export-modal-download"
+                style={{ backgroundColor: 'var(--violet-primary)', color: '#ffffff' }}
+                onClick={() => { setShowExportModal(false); setResearchConsent(false); downloadPDF(); }}
+              >
+                <FileText style={{ width: 16, height: 16 }} />
+                <span>Get Doctor Summary (PDF)</span>
               </button>
               <button
                 className="export-modal-download"
@@ -1097,6 +1323,175 @@ This is a mathematical screening signal based on statistical correlations from s
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Slide-over Drawer Overlay */}
+      {activeDrawer && (
+        <div className="drawer-overlay" onClick={() => setActiveDrawer(null)}>
+          <aside className="slide-drawer" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-header">
+              <div className="drawer-title-group">
+                {activeDrawer === 'model' && <Sparkles className="drawer-icon" />}
+                {activeDrawer === 'schema' && <Info className="drawer-icon" />}
+                {activeDrawer === 'settings' && <Settings className="drawer-icon" />}
+                {activeDrawer === 'help' && <HelpCircle className="drawer-icon" />}
+                <h3>
+                  {activeDrawer === 'model' && 'Model Card Details'}
+                  {activeDrawer === 'schema' && 'Schema & Vocabulary'}
+                  {activeDrawer === 'settings' && 'App Settings'}
+                  {activeDrawer === 'help' && 'Help & FAQ Guide'}
+                </h3>
+              </div>
+              <button className="drawer-close-btn" onClick={() => setActiveDrawer(null)}>
+                <X style={{ width: 18, height: 18 }} />
+              </button>
+            </div>
+
+            <div className="drawer-body">
+              {/* MODEL CARD DRAWER */}
+              {activeDrawer === 'model' && (
+                <div className="drawer-content">
+                  <div className="drawer-badge-row">
+                    <span className="drawer-pill">v0.1.0</span>
+                    <span className="drawer-pill">Logistic Regression</span>
+                    <span className="drawer-pill">13 Features</span>
+                  </div>
+                  <p className="drawer-intro">
+                    Lumen uses a self-report machine learning model trained on the Kottarathil PCOS dataset (541 records across 10 hospitals in Kerala, India) to evaluate risk patterns without lab tests or ultrasounds.
+                  </p>
+
+                  <h4 className="drawer-subhead">Held-out Test Split Performance</h4>
+                  <div className="drawer-table-wrapper">
+                    <table className="drawer-table">
+                      <thead>
+                        <tr>
+                          <th>Model</th>
+                          <th>Accuracy</th>
+                          <th>Recall</th>
+                          <th>AUC</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="active-row">
+                          <td>Self-Report LR (App)</td>
+                          <td>87.2%</td>
+                          <td>75.0%</td>
+                          <td>0.886</td>
+                        </tr>
+                        <tr>
+                          <td>Benchmark RF (41 features)</td>
+                          <td>91.7%</td>
+                          <td>77.8%</td>
+                          <td>0.955</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <h4 className="drawer-subhead">13 Self-Reported Features</h4>
+                  <p className="drawer-text">
+                    Age, Weight, Height, BMI, Cycle Regularity, Period Length, Weight Gain, Excess Hair Growth, Skin Darkening, Hair Loss, Pimples, Fast Food, Regular Exercise.
+                  </p>
+
+                  <div className="drawer-alert">
+                    <ShieldAlert style={{ width: 16, height: 16, flexShrink: 0, color: 'var(--amber-primary)' }} />
+                    <span>
+                      Recall is 0.75 — the model misses ~1 in 4 true positives. Scores are framed as screening signals, not medical diagnoses.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* SCHEMA GUIDE DRAWER */}
+              {activeDrawer === 'schema' && (
+                <div className="drawer-content">
+                  <div className="drawer-badge-row">
+                    <span className="drawer-pill">HerLog v0.1.0</span>
+                    <span className="drawer-pill">JSON Schema</span>
+                    <span className="drawer-pill">CC-BY-4.0</span>
+                  </div>
+                  <p className="drawer-intro">
+                    HerLog standardizes natural-language symptom logs into canonical codes so records are comparable across users and research datasets.
+                  </p>
+
+                  <h4 className="drawer-subhead">Controlled Vocabulary Codes</h4>
+                  <div className="vocab-chip-list">
+                    {Object.entries(SYMPTOM_LABELS).map(([code, label]) => (
+                      <div key={code} className="vocab-tag">
+                        <code className="vocab-code">{code}</code>
+                        <span className="vocab-label">{label}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <h4 className="drawer-subhead">Severity Scale</h4>
+                  <div className="sev-bar">
+                    <span className="sev-item sev-0">0: None</span>
+                    <span className="sev-item sev-1">1: Mild</span>
+                    <span className="sev-item sev-2">2: Moderate</span>
+                    <span className="sev-item sev-3">3: Severe</span>
+                  </div>
+                </div>
+              )}
+
+              {/* SETTINGS DRAWER */}
+              {activeDrawer === 'settings' && (
+                <div className="drawer-content">
+                  <h4 className="drawer-subhead">Storage &amp; Data</h4>
+                  <div className="drawer-settings-box">
+                    <div className="drawer-setting-row">
+                      <div className="setting-info">
+                        <Database style={{ width: 16, height: 16, color: 'var(--blue-primary)' }} />
+                        <div>
+                          <strong>LocalStorage Status</strong>
+                          <span>Saved in your browser</span>
+                        </div>
+                      </div>
+                      <span className="console-badge">Active</span>
+                    </div>
+                    <div className="drawer-setting-row">
+                      <div className="setting-info">
+                        <ClipboardList style={{ width: 16, height: 16, color: 'var(--violet-primary)' }} />
+                        <div>
+                          <strong>Logged Entries</strong>
+                          <span>{logEntries.length} entries saved</span>
+                        </div>
+                      </div>
+                      <span className="console-badge">{logEntries.length}</span>
+                    </div>
+                  </div>
+
+                  <h4 className="drawer-subhead">Export Data</h4>
+                  <button className="export-modal-download" style={{ width: '100%', justifyContent: 'center' }} onClick={() => { setActiveDrawer(null); setShowExportModal(true); }}>
+                    <Download style={{ width: 15, height: 15 }} />
+                    <span>Export JSON Dataset</span>
+                  </button>
+                </div>
+              )}
+
+              {/* HELP DRAWER */}
+              {activeDrawer === 'help' && (
+                <div className="drawer-content">
+                  <h4 className="drawer-subhead">Frequently Asked Questions</h4>
+                  <div className="drawer-faq-list">
+                    <div className="drawer-faq-item">
+                      <strong>How does Voice Logging work?</strong>
+                      <p>Tap Voice to record. OpenAI Whisper transcribes your speech and structures it into standardized symptom entries.</p>
+                    </div>
+                    <div className="drawer-faq-item">
+                      <strong>What does the Screening Signal mean?</strong>
+                      <p>It measures how closely your self-reported markers align with statistical patterns — it is a discussion aid, not a diagnosis.</p>
+                    </div>
+                    <div className="drawer-faq-item">
+                      <strong>Is my data private?</strong>
+                      <p>Yes. All entries stay stored in your browser. Exported files omit direct identifiers.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </aside>
         </div>
       )}
 

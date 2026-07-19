@@ -251,6 +251,30 @@ This is a mathematical screening signal based on statistical correlations from s
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Explanation disclosure toggle for Screening Signal
+  const [showScreeningExplanation, setShowScreeningExplanation] = useState(false);
+
+  // Dynamic plain-language screening explanation generated from live state
+  const screeningExplanationText = useMemo(() => {
+    if (!riskResult || !riskResult.drivers) return "This is a screening signal, not a diagnosis.";
+    
+    // Top factors from live state
+    const topFactors = riskResult.drivers
+      .slice(0, 3)
+      .map(d => FEATURE_LABELS[d.feature]?.label || d.feature);
+
+    let factorListStr = "your logged health markers";
+    if (topFactors.length === 1) {
+      factorListStr = topFactors[0];
+    } else if (topFactors.length === 2) {
+      factorListStr = `${topFactors[0]} and ${topFactors[1]}`;
+    } else if (topFactors.length >= 3) {
+      factorListStr = `${topFactors.slice(0, -1).join(", ")}, and ${topFactors[topFactors.length - 1]}`;
+    }
+
+    return `This score reflects how your self-reported markers compare with statistical patterns across clinical health datasets. Self-reported observations such as ${factorListStr} are helpful topics to discuss during your next routine visit with a healthcare provider. This is a screening signal, not a diagnosis.`;
+  }, [riskResult]);
+
   // Generate clean PDF summary for doctor visit via browser print dialog
   const downloadPDF = useCallback(() => {
     const dateStr = new Date().toLocaleDateString(undefined, {
@@ -767,8 +791,46 @@ This is a mathematical screening signal based on statistical correlations from s
             }}>
               {riskResult.band.toUpperCase()} RISK PATTERN
             </span>
+
+            {/* What does this mean button directly under screening result */}
+            <button 
+              className="explain-signal-btn"
+              onClick={() => setShowScreeningExplanation(prev => !prev)}
+              aria-expanded={showScreeningExplanation}
+            >
+              <HelpCircle style={{ width: 13, height: 13 }} />
+              <span>What does this mean?</span>
+              <ChevronDown style={{ 
+                width: 12, 
+                height: 12, 
+                transform: showScreeningExplanation ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.2s ease"
+              }} />
+            </button>
           </div>
         </section>
+
+        {/* Dynamic Plain-Language Screening Signal Explanation */}
+        {showScreeningExplanation && (
+          <div className="screening-explanation-card">
+            <div className="explanation-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Sparkles style={{ width: 15, height: 15, color: "var(--blue-primary)", flexShrink: 0 }} />
+                <span>Screening Signal Summary</span>
+              </div>
+              <button 
+                className="explanation-close-btn" 
+                onClick={() => setShowScreeningExplanation(false)}
+                title="Close explanation"
+              >
+                <X style={{ width: 14, height: 14 }} />
+              </button>
+            </div>
+            <p className="explanation-body-text">
+              {screeningExplanationText}
+            </p>
+          </div>
+        )}
 
         {/* Calm supportive banner for higher-risk screening signal */}
         {riskResult.band === "higher" && (

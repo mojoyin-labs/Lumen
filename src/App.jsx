@@ -683,16 +683,10 @@ This is a mathematical screening signal based on statistical correlations from s
             <h2>Hello, Guest</h2>
             <p>Lumen helps you notice patterns associated with PCOS (polycystic ovary syndrome) and prepare a summary to discuss with a doctor. It doesn't diagnose.</p>
           </div>
-          <div className="welcome-action-btns">
-            <button className="welcome-badge-btn" onClick={downloadPDF} style={{ backgroundColor: 'var(--violet-primary)', color: '#ffffff' }}>
-              <FileText style={{ width: 16, height: 16 }} />
-              <span>Get Doctor Summary (PDF)</span>
-            </button>
-            <button className="welcome-badge-btn" onClick={() => setShowExportModal(true)}>
-              <Download style={{ width: 16, height: 16 }} />
-              <span>Export JSON</span>
-            </button>
-          </div>
+          <button className="welcome-badge-btn" onClick={() => setShowExportModal(true)}>
+            <Download style={{ width: 16, height: 16 }} />
+            <span>Export</span>
+          </button>
         </div>
 
         {/* Top Overview Cards row */}
@@ -1258,68 +1252,87 @@ This is a mathematical screening signal based on statistical correlations from s
             </div>
 
             <div className="export-modal-body">
-              <p className="export-modal-desc">
-                Download your screening data and symptom logs as a JSON file. No name, email, or identifying information is ever included.
-              </p>
-
-              {/* Research consent toggle */}
-              <div className={`export-consent-row ${researchConsent ? 'active' : ''}`}>
-                <div className="export-consent-text">
-                  <span className="export-consent-label">Contribute to open research</span>
-                  <span className="export-consent-detail">
-                    Contribute an anonymous copy of this data to open research. No name, email, or identifying info is included.
-                  </span>
-                </div>
-                <label className="switch-widget">
-                  <input
-                    type="checkbox"
-                    checked={researchConsent}
-                    onChange={() => setResearchConsent(prev => !prev)}
-                  />
-                  <span className="switch-slider"></span>
-                </label>
+              {/* Safety Disclaimer */}
+              <div className="export-safety-disclaimer">
+                <ShieldAlert style={{ width: 18, height: 18, color: 'var(--blue-primary)', flexShrink: 0 }} />
+                <span>
+                  No name, email, or identifying information is ever included.
+                </span>
               </div>
 
-              {/* Summary of what will be exported */}
-              <div className="export-summary">
-                <div className="export-summary-item">
-                  <ShieldAlert style={{ width: 16, height: 16, color: 'var(--blue-primary)' }} />
-                  <span>Risk screening inputs &amp; signal score</span>
-                </div>
-                <div className="export-summary-item">
-                  <ClipboardList style={{ width: 16, height: 16, color: 'var(--violet-primary)' }} />
-                  <span>{logEntries.length} symptom log {logEntries.length === 1 ? 'entry' : 'entries'}</span>
-                </div>
-                {researchConsent && (
-                  <div className="export-summary-item research-note">
-                    <Sparkles style={{ width: 16, height: 16, color: 'var(--emerald-primary)' }} />
-                    <span>Free-text notes will be scrubbed of any names or places</span>
+              {/* Option 1: Doctor Summary (PDF) */}
+              <div className="export-option-card">
+                <div className="export-option-header">
+                  <div className="export-option-title-group">
+                    <FileText style={{ width: 18, height: 18, color: 'var(--violet-primary)' }} />
+                    <span className="export-option-title">Doctor Summary (PDF)</span>
                   </div>
-                )}
+                  <span className="export-option-badge private">Private</span>
+                </div>
+                <p className="export-option-desc">
+                  A private one-page summary for your appointment. This is your own data, for you.
+                </p>
+                <div className="export-option-actions">
+                  <button
+                    className="export-btn-primary pdf-btn"
+                    onClick={() => { setShowExportModal(false); setResearchConsent(false); downloadPDF(); }}
+                  >
+                    <FileText style={{ width: 16, height: 16 }} />
+                    <span>Download Doctor Summary (PDF)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Option 2: Anonymous Research Copy (JSON) */}
+              <div className="export-option-card">
+                <div className="export-option-header">
+                  <div className="export-option-title-group">
+                    <Database style={{ width: 18, height: 18, color: 'var(--teal-primary)' }} />
+                    <span className="export-option-title">Anonymous Research Copy (JSON)</span>
+                  </div>
+                  <span className="export-option-badge research">Open Format</span>
+                </div>
+                <p className="export-option-desc">
+                  A de-identified copy in an open format that can be contributed to PCOS research. No name, email, or identifying info is included. Nothing is uploaded automatically — you choose where it goes.
+                </p>
+                
+                {/* Research Consent Checkbox */}
+                <div className={`export-consent-row ${researchConsent ? 'active' : ''}`}>
+                  <div className="export-consent-text">
+                    <span className="export-consent-label">Contribute to open research</span>
+                    <span className="export-consent-detail">
+                      I consent to include an anonymous copy formatted for open research.
+                    </span>
+                  </div>
+                  <label className="switch-widget">
+                    <input
+                      type="checkbox"
+                      checked={researchConsent}
+                      onChange={() => setResearchConsent(prev => !prev)}
+                    />
+                    <span className="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div className="export-option-actions">
+                  <button
+                    className="export-btn-primary json-btn"
+                    disabled={!researchConsent}
+                    onClick={() => downloadExport(true)}
+                  >
+                    <Download style={{ width: 16, height: 16 }} />
+                    <span>Download lumen-export.json</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="export-modal-actions" style={{ flexWrap: 'wrap', gap: 8 }}>
+            <div className="export-modal-footer">
               <button
                 className="export-modal-cancel"
                 onClick={() => { setShowExportModal(false); setResearchConsent(false); }}
               >
-                Cancel
-              </button>
-              <button
-                className="export-modal-download"
-                style={{ backgroundColor: 'var(--violet-primary)', color: '#ffffff' }}
-                onClick={() => { setShowExportModal(false); setResearchConsent(false); downloadPDF(); }}
-              >
-                <FileText style={{ width: 16, height: 16 }} />
-                <span>Get Doctor Summary (PDF)</span>
-              </button>
-              <button
-                className="export-modal-download"
-                onClick={() => downloadExport(researchConsent)}
-              >
-                <Download style={{ width: 16, height: 16 }} />
-                <span>Download lumen-export.json</span>
+                Close
               </button>
             </div>
           </div>

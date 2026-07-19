@@ -1673,12 +1673,14 @@ h6 {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  width: 480px;
-  max-width: 92vw;
+  width: 520px;
+  max-width: 94vw;
+  max-height: 90vh;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
   animation: modalSlideIn 0.25s ease-out;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 @keyframes modalSlideIn {
@@ -1696,7 +1698,7 @@ h6 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px 16px;
+  padding: 18px 24px 14px;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -1729,93 +1731,192 @@ h6 {
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
+  overflow-y: auto;
+  max-height: calc(90vh - 120px);
 }
 
-.export-modal-desc {
-  font-size: 14px;
+/* Safety Disclaimer Banner */
+.export-safety-disclaimer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--blue-light);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+/* Option Cards inside Modal */
+.export-option-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: var(--transition);
+}
+
+.export-option-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.export-option-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.export-option-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.export-option-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.export-option-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.export-option-badge.private {
+  background: var(--violet-light);
+  color: var(--violet-text);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.export-option-badge.research {
+  background: var(--teal-light);
+  color: var(--teal-text);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+}
+
+.export-option-desc {
+  font-size: 13px;
   color: var(--text-muted);
-  line-height: 1.6;
+  line-height: 1.55;
   margin: 0;
 }
 
-/* Consent toggle row */
+/* Consent toggle row inside option card */
 .export-consent-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.02);
+  gap: 14px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.2);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  transition:
-    border-color 0.2s,
-    background 0.2s;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
 }
 
 .export-consent-row.active {
-  border-color: rgba(16, 185, 129, 0.3);
-  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 .export-consent-text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   flex: 1;
   min-width: 0;
 }
 
 .export-consent-label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-main);
 }
 
 .export-consent-detail {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
-/* Export summary list */
-.export-summary {
+.export-option-actions {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  justify-content: flex-start;
+  margin-top: 2px;
 }
 
-.export-summary-item {
-  display: flex;
+.export-btn-primary {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--text-main);
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  width: 100%;
 }
 
-.export-summary-item.research-note {
-  color: var(--emerald-text);
-  animation: fadeIn 0.2s ease-out;
+.export-btn-primary.pdf-btn {
+  background: var(--violet-primary);
+  color: #ffffff;
 }
 
-/* Modal actions */
-.export-modal-actions {
+.export-btn-primary.pdf-btn:hover {
+  background: #7c3aed;
+  transform: translateY(-1px);
+}
+
+.export-btn-primary.json-btn {
+  background: var(--blue-primary);
+  color: #ffffff;
+}
+
+.export-btn-primary.json-btn:hover:not(:disabled) {
+  background: var(--blue-secondary);
+  transform: translateY(-1px);
+}
+
+.export-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.export-modal-footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 24px 20px;
+  padding: 12px 24px 16px;
   border-top: 1px solid var(--border-color);
+  background: var(--bg-card);
 }
 
 .export-modal-cancel {
   background: none;
   border: 1px solid var(--border-color);
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  padding: 10px 18px;
+  padding: 8px 16px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: var(--transition);
@@ -1825,28 +1926,6 @@ h6 {
   background: var(--bg-hover);
   color: var(--text-main);
   border-color: rgba(255, 255, 255, 0.15);
-}
-
-.export-modal-download {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--blue-primary);
-  color: #ffffff;
-  border: none;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 10px 20px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition:
-    background 0.2s,
-    transform 0.1s;
-}
-
-.export-modal-download:hover {
-  background: var(--blue-secondary);
-  transform: translateY(-1px);
 }
 
 .export-modal-download:active {

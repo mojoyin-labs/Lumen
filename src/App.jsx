@@ -683,7 +683,7 @@ This is a mathematical screening signal based on statistical correlations from s
             <h2>Hello, Guest</h2>
             <p>Lumen helps you notice patterns associated with PCOS (polycystic ovary syndrome) and prepare a summary to discuss with a doctor. It doesn't diagnose.</p>
           </div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div className="welcome-action-btns">
             <button className="welcome-badge-btn" onClick={downloadPDF} style={{ backgroundColor: 'var(--violet-primary)', color: '#ffffff' }}>
               <FileText style={{ width: 16, height: 16 }} />
               <span>Get Doctor Summary (PDF)</span>

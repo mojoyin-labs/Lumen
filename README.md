@@ -2,7 +2,7 @@
 
 **Screen your PCOS risk from what you already know — and build the symptom history that gets you taken seriously.**
 
-Lumen helps women notice patterns associated with PCOS (polycystic ovary syndrome) and prepare a clear summary to discuss with a doctor. It is a screening and self-advocacy tool — **not a diagnostic device.**
+Lumen helps women notice patterns associated with PCOS (polycystic ovary syndrome) and prepare a clear summary to discuss with a doctor. It is a screening and self-advocacy tool, **not a diagnostic device.**
 
 🔗 **Live app:** https://lumen-blond-alpha.vercel.app/
 🏆 Built for the Hack-Nation 6th Global AI Hackathon · Challenge 05: Foundation Models for Women's Hormonal Health · **Application layer** (with a Model-layer contribution).
@@ -24,7 +24,7 @@ Every result is framed as a screening signal, never a diagnosis. PCOS names the 
 
 ## What makes it different
 
-Most PCOS models rely on hormone panels and ultrasound — features a woman can't self-report, so they only work *after* she's already in the clinical system. Lumen's model uses **only self-reportable inputs** and still reaches **~87% accuracy** — a meaningful signal *before a single test*. It's also **explainable**, and it leaves behind reusable open infrastructure rather than being an isolated app.
+Most PCOS models rely on hormone panels and ultrasound — features a woman can't self-report, so they only work *after* she's already in the clinical system. Lumen's model uses **only self-reportable inputs** and still reaches **~87% accuracy**, a meaningful signal *before a single test*. It's also **explainable**, and it leaves behind reusable open infrastructure rather than being an isolated app.
 
 ---
 
